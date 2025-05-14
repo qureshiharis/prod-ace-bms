@@ -54,8 +54,6 @@ async def consume_topic(topic_name, session):
                     if parsed_payload is not None:
 
                         processed = process_payload(parsed_payload)
-                        logger.info(f"[{topic_name}] Processed: {processed}")
-
                         timestamp = processed.get("Timestamp")
                         try:
                             time_only = pd.to_datetime(int(timestamp.iloc[0])).strftime("%H:%M:%S")
@@ -94,7 +92,6 @@ async def consume_topic(topic_name, session):
                 # Always check for flush
                 if first_message_time is not None and message_queue:
                     time_since_first_message = time.time() - first_message_time
-                    logger.info(f"{topic_name} time since first message in queue: {time_since_first_message:.2f}s")
 
                     if time_since_first_message >= 20:
                         df_new = pd.DataFrame(message_queue)
