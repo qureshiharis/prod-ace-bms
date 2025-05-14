@@ -1,0 +1,7 @@
+pandas>=2.0.0
+pytz
+avassa-client>=0.6.0
+streamlit>=1.30
+pandas
+altair
+streamlit-autorefresh

@@ -1,0 +1,27 @@
+name: ace-bms-system
+version: "1.0"
+services:
+  - name: ace-bms-system
+    mode: replicated
+    replicas: 1
+    placement:
+      match-host-labels: function = ventilation
+    share-pid-namespace: false
+    containers:
+      - name: ace-bms-system-container
+        mounts: []
+        container-log-size: 100 MB
+        container-log-archive: false
+        shutdown-timeout: 10s
+        image: index.docker.io/topnot/ace-bms-dashboard:v1.0
+        env:
+          SECRET_ID: ${SYS_APPROLE_SECRET_ID}
+          ROLE_ID: dbb4ec8a-bc2a-41a2-b13a-922da199c044
+          API_CA_CERT: ${SYS_API_CA_CERT}
+        approle: ace-anomaly-approle
+        on-mounted-file-change:
+          restart: true
+    network:
+      outbound-access:
+        allow-all: true
+on-mutable-variable-change: restart-service-instance
