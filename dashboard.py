@@ -26,9 +26,10 @@ Use the sidebar to select a subsystem. The dashboard will display recent reading
 """)
 
 
-topic_env = os.getenv("TOPICS_TO_CONSUME", "anomalies-heating,anomalies-ventilation")
-subsystems = [t.strip().split("-", 1)[-1] for t in topic_env.split(",") if t.strip()]
-subsystem = st.sidebar.selectbox("Select Subsystem", subsystems, format_func=str.title)
+# Get the comma-separated topic list from environment variable
+topic_env = os.getenv("TOPICS_TO_CONSUME", "anomalies-heating, anomalies-ventilation")
+subsystems = [t.strip() for t in topic_env.split(",") if t.strip()]
+subsystem = st.sidebar.selectbox("Select Subsystem", subsystems)
 
 csv_path = f"{subsystem}.csv"
 
