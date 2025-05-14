@@ -100,7 +100,7 @@ async def consume_topic(topic_name, session):
                         df_new = pd.DataFrame(message_queue)
                         message_queue.clear()
 
-                        file = topic_name.replace("anomalies-", "") + ".csv"
+                        file = topic_name + ".csv"
                         logger.info(f"{topic_name} flushing {len(df_new)} rows to CSV")
                         try:
                             if os.path.exists(file):
