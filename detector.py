@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
-
-from config import TAG_PAIRS, ANOMALY_STD_MULTIPLIER
+import os
 from logger_config import setup_logger
 
 logger = setup_logger(__name__)
+
+ANOMALY_STD_MULTIPLIER = float(os.getenv("ANOMALY_STD_MULTIPLIER", 3))
 
 def detect_anomalies_for_pair(df: pd.DataFrame, sp_tag: str, pv_tag: str) -> pd.DataFrame:
     sp_col = f"SetPoint_{sp_tag}"

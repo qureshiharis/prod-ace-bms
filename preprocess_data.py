@@ -30,4 +30,9 @@ def try_merge_and_detect(df_sp, df_pv, tag_name):
     latest_row = df_anomaly[df_anomaly["Timestamp"] == df_anomaly["Timestamp"].max()]
 
     logger.info(f"Detection done for pair: {tag_name}, anomalies: {has_anomaly}")
+
+    if tag_name in message_buffer:
+        del message_buffer[tag_name]
+        logger.info(f"Cleared buffer for tag prefix: {tag_name}")
+
     return latest_row

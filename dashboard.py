@@ -33,7 +33,7 @@ subsystem = st.sidebar.selectbox("Select Subsystem", subsystems, format_func=str
 csv_path = f"{subsystem}.csv"
 
 if not os.path.exists(csv_path):
-    st.warning(f"No data file found for {subsystem}. Waiting for new data...")
+    st.warning(f"No data found for {subsystem}. Waiting for new data...")
     st.stop()
 
 from streamlit_autorefresh import st_autorefresh
@@ -50,11 +50,8 @@ except Exception as e:
     st.stop()
 
 # --- Process Data ---
-try:
-    df["Timestamp"] = pd.to_datetime(pd.to_numeric(df["Timestamp"], errors="coerce"), unit="ms").dt.tz_localize("UTC").dt.tz_convert("Europe/Stockholm")
-except Exception:
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-
+df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+df["Timestamp"] = df["Timestamp"].dt.tz_convert("Europe/Stockholm") if df["Timestamp"].dt.tz else df["Timestamp"].dt.tz_localize("UTC").dt.tz_convert("Europe/Stockholm")
 df = df.dropna(subset=["Sensor", "SetPoint", "Actual", "Timestamp"]).sort_values("Timestamp")
 sensors = sorted(df["Sensor"].unique())
 
@@ -118,12 +115,12 @@ for sensor_id in sensors:
 
     chart = alt.layer(line_chart, points, anomaly_points)
 
-    st.markdown(f"### 📡 Sensor: `{sensor_id}`")
+    st.markdown(f"### Sensor: `{sensor_id}`")
     st.altair_chart(chart, use_container_width=True)
 
 # --- Historical Anomalies ---
 df_anomaly = df[df.get("Anomaly", False) == True].sort_values("Timestamp", ascending=False)
-st.markdown("## 🔍 Historical Anomalies")
+st.markdown("## Historical Anomalies")
 
 if not df_anomaly.empty:
     st.dataframe(df_anomaly[["Timestamp", "Sensor", "SetPoint", "Actual", "Error"]].head(20), use_container_width=True)

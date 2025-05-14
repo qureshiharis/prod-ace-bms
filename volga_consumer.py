@@ -8,6 +8,7 @@ import time
 from avassa_client import approle_login
 from avassa_client.volga import Consumer, Topic, CreateOptions, Position
 from datetime import datetime, timezone
+from helper import parse_and_store_payload
 from logger_config import setup_logger
 
 logger = setup_logger(__name__)
@@ -46,51 +47,56 @@ async def consume_topic(topic_name, session):
 
                 if msg:
                     logger.info(f"Received raw message on {topic_name}: {msg}")
+                    # ???
                     payload = msg["payload"]
-                    processed = process_payload(payload)
-                    logger.info(f"[{topic_name}] Processed: {processed}")
 
-                    timestamp = processed.get("Timestamp")
-                    try:
-                        time_only = pd.to_datetime(int(timestamp)).strftime("%H:%M:%S")
-                    except:
-                        time_only = pd.Timestamp.now().strftime("%H:%M:%S")
+                    parsed_payload = parse_and_store_payload(topic_name, payload)
+                    if parsed_payload is not None:
 
-                    sensor_data = {}
-                    for key, value in processed.items():
-                        if "_" in key:
-                            prefix, *mid, suffix = key.split("_")
-                            sensor_id = "_".join(mid)
-                            entry = sensor_data.setdefault(sensor_id, {
-                                "Timestamp": timestamp,
-                                "TimeOnly": time_only,
-                                "Sensor": sensor_id,
-                                "SetPoint": None,
-                                "Actual": None,
-                                "Error": None,
-                                "Anomaly": None
-                            })
-                            if prefix == "SetPoint":
-                                entry["SetPoint"] = float(value)
-                            elif prefix == "Actual":
-                                entry["Actual"] = float(value)
-                            elif prefix == "Error":
-                                entry["Error"] = float(value)
-                            elif prefix == "Anomaly":
-                                entry["Anomaly"] = str(value).lower() in ["true", "1", "yes"]
+                        processed = process_payload(parsed_payload)
+                        logger.info(f"[{topic_name}] Processed: {processed}")
 
-                    if not message_queue and first_message_time is None:
-                        logger.info(f"{topic_name} queue is empty, setting first message time")
-                        first_message_time = time.time()
-                    message_queue.extend(sensor_data.values())
-                    logger.info(f"{topic_name} queue length: {len(message_queue)}")
+                        timestamp = processed.get("Timestamp")
+                        try:
+                            time_only = pd.to_datetime(int(timestamp.iloc[0])).strftime("%H:%M:%S")
+                        except:
+                            time_only = pd.Timestamp.now().strftime("%H:%M:%S")
+
+                        sensor_data = {}
+                        for key, value in processed.items():
+                            if "_" in key:
+                                prefix, *mid, suffix = key.split("_")
+                                sensor_id = "_".join(mid)
+                                entry = sensor_data.setdefault(sensor_id, {
+                                    "Timestamp": timestamp.iloc[0] if hasattr(timestamp, "iloc") else timestamp,
+                                    "TimeOnly": time_only,
+                                    "Sensor": sensor_id,
+                                    "SetPoint": None,
+                                    "Actual": None,
+                                    "Error": None,
+                                    "Anomaly": None
+                                })
+                                if prefix == "SetPoint":
+                                    entry["SetPoint"] = float(value.iloc[0])
+                                elif prefix == "Actual":
+                                    entry["Actual"] = float(value.iloc[0])
+                                elif prefix == "Error":
+                                    entry["Error"] = float(value.iloc[0])
+                                elif prefix == "Anomaly":
+                                    entry["Anomaly"] = str(value).lower() in ["true", "1", "yes"]
+
+                        if not message_queue and first_message_time is None:
+                            logger.info(f"{topic_name} queue is empty, setting first message time")
+                            first_message_time = time.time()
+                        message_queue.extend(sensor_data.values())
+                        logger.info(f"{topic_name} queue length: {len(message_queue)}")
 
                 # Always check for flush
                 if first_message_time is not None and message_queue:
                     time_since_first_message = time.time() - first_message_time
                     logger.info(f"{topic_name} time since first message in queue: {time_since_first_message:.2f}s")
 
-                    if time_since_first_message >= 10:
+                    if time_since_first_message >= 20:
                         df_new = pd.DataFrame(message_queue)
                         message_queue.clear()
 

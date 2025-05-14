@@ -1,27 +1,38 @@
-name: ace-bms-system
-version: "1.0"
+name: ace-bms-dev
+version: "1.1"
 services:
-  - name: ace-bms-system
+  - name: ace-bms
     mode: replicated
     replicas: 1
     placement:
       match-host-labels: function = ventilation
     share-pid-namespace: false
     containers:
-      - name: ace-bms-system-container
+      - name: ace-bms-container
         mounts: []
         container-log-size: 100 MB
         container-log-archive: false
         shutdown-timeout: 10s
-        image: index.docker.io/topnot/ace-bms-dashboard:v1.0
+        image: YOUR IMAGE URL
         env:
+          TOPICS_TO_CONSUME: anomalies-heating, anomalies-ventilation
           SECRET_ID: ${SYS_APPROLE_SECRET_ID}
-          ROLE_ID: dbb4ec8a-bc2a-41a2-b13a-922da199c044
+          ROLE_ID: YOUR ROLE ID 
+          DATA_POINTS_SAVED: "10"
           API_CA_CERT: ${SYS_API_CA_CERT}
+          ANOMALY_STD_MULTIPLIER: "3"
         approle: ace-anomaly-approle
         on-mounted-file-change:
           restart: true
     network:
+      ingress-ip-per-instance:
+        protocols:
+          - name: tcp
+            port-ranges: "8501"
+        inbound-access:
+          allow-all: true
+        access:
+          allow-all: true
       outbound-access:
         allow-all: true
 on-mutable-variable-change: restart-service-instance
