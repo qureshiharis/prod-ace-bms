@@ -4,10 +4,6 @@ import os
 import pandas as pd
 import altair as alt
 import streamlit as st
-from datetime import datetime
-import pytz
-
-import time
 
 @st.cache_data(ttl=0, show_spinner=False)
 def get_file_last_modified_time(file_path):
@@ -87,14 +83,14 @@ for sensor_id in sensors:
         value_name="Value"
     )
 
-    base = alt.Chart(melted).encode(
-        x=alt.X("Timestamp:T", title="Time", axis=alt.Axis(format="%H:%M")),
+    base = alt.Chart(melted).mark_line(clip=False).encode(
+        x=alt.X("Timestamp:T", title="Time", axis=alt.Axis(format="%H:%M",tickCount=5)),
         y=alt.Y("Value:Q", title="Value", scale=y_scale),
         color=alt.Color("Type:N"),
         strokeDash=alt.StrokeDash("Type:N")
     ).properties(width=800).interactive(bind_y=False)
 
-    line_chart = base.mark_line().encode(
+    line_chart = base.mark_line(interpolate='monotone').encode(
         tooltip=[alt.Tooltip("Timestamp:T", title="Time", format="%H:%M"), "Value:Q", "Anomaly:O"]
     )
     points = base.mark_point(filled=True).encode(
