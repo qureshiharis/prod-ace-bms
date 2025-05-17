@@ -13,6 +13,62 @@ def encode_image_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
+@st.cache_data
+def load_all_base64_logos():
+    return {
+        "ace_building": encode_image_to_base64("ace_building.png"),
+        "ace": encode_image_to_base64("ace_logo.png"),
+        "ltu": encode_image_to_base64("ltu_logo.png"),
+        "skelleftea_kraft": encode_image_to_base64("skelleftea_kraft_logo.png"),
+        "kommun": encode_image_to_base64("skelleftea_kommun_logo.png"),
+        "vinnova": encode_image_to_base64("vinnova.png")
+    }
+
+def set_login_background(base64_image, opacity=0.5):
+    st.markdown(f"""
+        <style>
+        .stApp {{
+            background: url("data:image/png;base64,{base64_image}") no-repeat center center fixed;
+            background-size: cover;
+        }}
+        .login-background-img {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: {opacity};
+            object-fit: cover;
+        }}
+        </style>
+        <img class="login-background-img" src="data:image/png;base64,{base64_image}">
+    """, unsafe_allow_html=True)
+
+def render_partner_logos(logos):
+    ace_logo_b64 = logos["ace"]
+    ltu_logo_b64 = logos["ltu"]
+    sk_logo_b64 = logos["skelleftea_kraft"]
+    kommun_logo_b64 = logos["kommun"]
+    vinnova_b64 = logos["vinnova"]
+
+    st.markdown(f"""
+        <hr style="margin-top: 4rem;">
+        <div style="text-align: center; font-size: 0.9rem; color: #555;">
+            <p>The Arctic Center of Energy (ACE) is a global competence center that accelerates the electrification of society.<br>
+            Through research and education we develop the knowledge and skills needed to succeed with the sustainable energy transition.</p>
+            <br>
+            <strong>Core partners</strong><br><br>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 40px;">
+                <img src="data:image/png;base64,{ace_logo_b64}" height="50">
+                <img src="data:image/png;base64,{ltu_logo_b64}" height="50">
+                <img src="data:image/png;base64,{sk_logo_b64}" height="50">
+                <img src="data:image/png;base64,{kommun_logo_b64}" height="50">
+                <img src="data:image/png;base64,{vinnova_b64}" height="50">
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
 
 st.set_page_config(page_title="Anomaly Dashboard", layout="wide")
 
@@ -41,65 +97,16 @@ with center_col:
     authenticator.login(location='main', fields={'Form name': 'Login'})
 auth_status = st.session_state.get("authentication_status")
 
-
-ace_building_b64 = encode_image_to_base64("ace_building.png")
+logos = load_all_base64_logos()
+ace_building_b64 = logos["ace_building"]
 
 # Access authentication status from session state
 if auth_status is False:
     st.error("Username/password is incorrect")
-
-    st.markdown(f"""
-        <style>
-        .stApp {{
-            background: url("data:image/png;base64,{ace_building_b64}") no-repeat center center fixed;
-            background-size: cover;
-        }}
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Re-show background and logos
-    st.markdown(f"""
-        <style>
-        .login-background-img {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -1;
-            opacity: 0.5;
-            object-fit: cover;
-        }}
-        </style>
-        <img class="login-background-img" src="data:image/png;base64,{ace_building_b64}">
-    """, unsafe_allow_html=True)
-
-    ace_logo_b64 = encode_image_to_base64("ace_logo.png")
-    ltu_logo_b64 = encode_image_to_base64("ltu_logo.png")
-    sk_logo_b64 = encode_image_to_base64("skelleftea_kraft_logo.png")
-    kommun_logo_b64 = encode_image_to_base64("skelleftea_kommun_logo.png")
-    vinnova_b64 = encode_image_to_base64("vinnova.png")
-
-    st.markdown(f"""
-        <hr style="margin-top: 4rem;">
-        <div style="text-align: center; font-size: 0.9rem; color: #555;">
-            <p>The Arctic Center of Energy (ACE) is a global competence center that accelerates the electrification of society.<br>
-            Through research and education we develop the knowledge and skills needed to succeed with the sustainable energy transition.</p>
-            <br>
-            <strong>Core partners</strong><br><br>
-            <div style="display: flex; justify-content: center; align-items: center; gap: 40px;">
-                <img src="data:image/png;base64,{ace_logo_b64}" height="50">
-                <img src="data:image/png;base64,{ltu_logo_b64}" height="50">
-                <img src="data:image/png;base64,{sk_logo_b64}" height="50">
-                <img src="data:image/png;base64,{kommun_logo_b64}" height="50">
-                <img src="data:image/png;base64,{vinnova_b64}" height="50">
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+    set_login_background(ace_building_b64, opacity=1)
+    render_partner_logos(logos)
     st.stop()
 elif auth_status is None:
-
-
     # Display navigation bar
     st.markdown("""
         <div style='text-align: center; margin-top: 1rem; margin-bottom: 2rem; font-size: 1rem;'>
@@ -108,42 +115,9 @@ elif auth_status is None:
             <a href='https://arcticcenterofenergy.se/en/ace-house/' target='_blank' style='margin: 0 20px; text-decoration: none; color: #0366d6;'>ACE House</a>
         </div>
     """, unsafe_allow_html=True)
-
-    # Add background image to the entire Streamlit app using .stApp
-    st.markdown(f"""
-        <style>
-        .stApp {{
-            background: url("data:image/png;base64,{ace_building_b64}") no-repeat center center fixed;
-            background-size: cover;
-        }}
-        </style>
-    """, unsafe_allow_html=True)
-
-
-
+    set_login_background(ace_building_b64, opacity=1)
     # --- Partner banner for login screen ---
-    ace_logo_b64 = encode_image_to_base64("ace_logo.png")
-    ltu_logo_b64 = encode_image_to_base64("ltu_logo.png")
-    sk_logo_b64 = encode_image_to_base64("skelleftea_kraft_logo.png")
-    kommun_logo_b64 = encode_image_to_base64("skelleftea_kommun_logo.png")
-    vinnova_b64 = encode_image_to_base64("vinnova.png")
-
-    st.markdown(f"""
-        <hr style="margin-top: 4rem;">
-        <div style="text-align: center; font-size: 0.9rem; color: #555;">
-            <p>The Arctic Center of Energy (ACE) is a global competence center that accelerates the electrification of society.<br>
-            Through research and education we develop the knowledge and skills needed to succeed with the sustainable energy transition.</p>
-            <br>
-            <strong>Core partners</strong><br><br>
-            <div style="display: flex; justify-content: center; align-items: center; gap: 40px;">
-                <img src="data:image/png;base64,{ace_logo_b64}" height="50">
-                <img src="data:image/png;base64,{ltu_logo_b64}" height="50">
-                <img src="data:image/png;base64,{sk_logo_b64}" height="50">
-                <img src="data:image/png;base64,{kommun_logo_b64}" height="50">
-                <img src="data:image/png;base64,{vinnova_b64}" height="50">
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+    render_partner_logos(logos)
     st.stop()
 else:
     name = st.session_state.get("name")
@@ -169,6 +143,8 @@ logo_path = "logo.png"
 if os.path.exists(logo_path):
     logo = Image.open(logo_path)
     st.sidebar.image(logo, use_container_width=True)
+st.sidebar.markdown(f"Logged in as **{name}**")
+authenticator.logout("Logout", location="sidebar")
 
 # --- Subsystems ---
 st.sidebar.markdown("### Subsystems")
@@ -183,7 +159,7 @@ st.sidebar.markdown("### Dashboard Controls")
 show_anomalies_only = st.sidebar.checkbox("Show Anomalous Sensors Only", value=False)
 enable_refresh = st.sidebar.checkbox("Auto-refresh", value=True)
 
-st.sidebar.markdown("### Stats")
+# Below you add rest of the side pane elements
 
 csv_path = f"{subsystem}.csv"
 
@@ -213,6 +189,7 @@ df = df.dropna(subset=["Sensor", "SetPoint", "Actual", "Timestamp"]).sort_values
 
 sensors = sorted(df["Sensor"].unique())
 
+st.sidebar.markdown("### Stats")
 st.sidebar.metric("Sensors Monitored", len(sensors))
 
 if df.empty:
@@ -285,8 +262,6 @@ for sensor_id in sensors:
 df_anomaly = df[df.get("Anomaly", False) == True].sort_values("Timestamp", ascending=False)
 st.sidebar.metric("Anomalies", len(df_anomaly))
 # Display logout button and user info in the sidebar
-st.sidebar.markdown(f"👋 Logged in as **{name}**")
-authenticator.logout("Logout", location="sidebar")
 st.markdown("## Historical Anomalies")
 
 if not df_anomaly.empty:
