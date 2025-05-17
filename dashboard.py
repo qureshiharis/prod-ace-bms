@@ -31,19 +31,9 @@ def set_login_background(base64_image, opacity=0.5):
         .stApp {{
             background: url("data:image/png;base64,{base64_image}") no-repeat center center fixed;
             background-size: cover;
-        }}
-        .login-background-img {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -1;
-            opacity: {opacity};
-            object-fit: cover;
+            background-color: rgba(255, 255, 255, 1);
         }}
         </style>
-        <img class="login-background-img" src="data:image/png;base64,{base64_image}">
     """, unsafe_allow_html=True)
 
 def render_partner_logos(logos):
@@ -92,14 +82,15 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=1
 )
 
+logos = load_all_base64_logos()
+ace_building_b64 = logos["ace_building"]
+
 # Always call login and store auth status
 left_col, center_col, right_col = st.columns([1, 2, 1])
 with center_col:
+    set_login_background(ace_building_b64, opacity=1)
     authenticator.login(location='main', fields={'Form name': 'Login'})
 auth_status = st.session_state.get("authentication_status")
-
-logos = load_all_base64_logos()
-ace_building_b64 = logos["ace_building"]
 
 # Access authentication status from session state
 if auth_status is False:
@@ -255,6 +246,7 @@ for sensor_id in sensors:
     )
 
     chart = alt.layer(line_chart, points, anomaly_points)
+    chart = chart.configure_view(strokeWidth=0).configure(background='transparent')
 
     st.markdown(f"### Sensor: `{sensor_id}`")
     st.altair_chart(chart, use_container_width=True)
@@ -266,6 +258,6 @@ st.sidebar.metric("Anomalies", len(df_anomaly))
 st.markdown("## Historical Anomalies")
 
 if not df_anomaly.empty:
-    st.dataframe(df_anomaly[["Timestamp", "Sensor", "SetPoint", "Actual", "Error"]].head(20), use_container_width=True)
+    st.table(df_anomaly[["Timestamp", "Sensor", "SetPoint", "Actual", "Error"]].head(20))
 else:
     st.write("No anomalies recorded yet.")

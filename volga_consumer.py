@@ -13,6 +13,9 @@ from logger_config import setup_logger
 
 logger = setup_logger(__name__)
 
+max_rows = int(os.getenv("DATA_POINTS_SAVED", 20))  # default to 20 if not set
+write_delay = int(os.getenv("WRITE_DELAY", 20))  # default to 20 if not set
+
 # Utility to flatten payloads
 def process_payload(payload):
     processed = {}
@@ -93,7 +96,7 @@ async def consume_topic(topic_name, session):
                 if first_message_time is not None and message_queue:
                     time_since_first_message = time.time() - first_message_time
 
-                    if time_since_first_message >= 20:
+                    if time_since_first_message >= write_delay:
                         df_new = pd.DataFrame(message_queue)
                         message_queue.clear()
 
@@ -107,7 +110,7 @@ async def consume_topic(topic_name, session):
                             else:
                                 df_combined = df_new
 
-                            max_rows = int(os.getenv("DATA_POINTS_SAVED", 20))  # default to 20 if not set
+                            
                             if len(df_combined) > max_rows:
                                 df_combined = df_combined.tail(max_rows)
 
