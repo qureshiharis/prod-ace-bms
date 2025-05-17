@@ -8,6 +8,7 @@ from PIL import Image
 import streamlit_authenticator as stauth
 import base64
 
+
 # Utility function to encode images to base64
 def encode_image_to_base64(path):
     with open(path, "rb") as f:
