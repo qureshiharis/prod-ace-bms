@@ -49,7 +49,7 @@ async def consume_topic(topic_name, session):
                     msg = None
 
                 if msg:
-                    logger.info(f"Received raw message on {topic_name}: {msg}")
+                    logger.info(f"Received raw message on {topic_name}")
                     # ???
                     payload = msg["payload"]
 
