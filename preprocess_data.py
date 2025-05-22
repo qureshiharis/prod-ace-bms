@@ -22,7 +22,7 @@ def try_merge_and_detect(df_sp, df_pv, tag_name):
     # Merge with 30s tolerance
     df = pd.merge_asof(df_sp, df_pv, on="Timestamp", direction="nearest", tolerance=pd.Timedelta("30s"))
 
-    df = df.sort_values("Timestamp").interpolate().bfill().ffill()
+    df = df.sort_values("Timestamp").interpolate().bfill().ffill().dropna()
 
     # Detect anomalies
     df_anomaly, has_anomaly = detect_anomalies_for_pair(df.copy(), f"{tag_name}_CSP", f"{tag_name}_PV")
