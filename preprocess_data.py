@@ -19,10 +19,28 @@ def try_merge_and_detect(df_sp, df_pv, tag_name):
     df_sp = df_sp.sort_values("Timestamp")
     df_pv = df_pv.sort_values("Timestamp")
 
-    # Merge with 30s tolerance
-    df = pd.merge_asof(df_sp, df_pv, on="Timestamp", direction="nearest", tolerance=pd.Timedelta("30s"))
+    # Merge with generous tolerance
+    df = pd.merge_asof(
+        df_sp, df_pv, on="Timestamp",
+        direction="nearest",
+        tolerance=pd.Timedelta("60s")  # Increased from 30s to allow slight delays
+    )
 
-    df = df.sort_values("Timestamp").interpolate().bfill().ffill().dropna()
+    logger.info(f"[{tag_name}] Merge done. Total rows: {len(df)}. NaN rows (any): {df.isna().any(axis=1).sum()}")
+
+    # Drop rows where both CSP and PV are missing
+    before_drop = len(df)
+    df = df.dropna(subset=[f"SetPoint_{tag_name}_CSP", f"Actual_{tag_name}_PV"], how='all')
+    dropped_rows = before_drop - len(df)
+    logger.info(f"[{tag_name}] Dropped rows with both NaNs: {dropped_rows}")
+    
+    # Interpolate only small gaps (limit=2 means max 2 rows filled in a gap)
+    df = df.sort_values("Timestamp").interpolate(limit=2)
+
+    # Fallback to fill single edge NaNs
+    df = df.bfill(limit=1).ffill(limit=1)
+
+    logger.info(f"[{tag_name}] Interpolation and fill done. Remaining NaNs: {df.isna().sum().sum()}")
 
     # Detect anomalies
     df_anomaly, has_anomaly = detect_anomalies_for_pair(df.copy(), f"{tag_name}_CSP", f"{tag_name}_PV")
