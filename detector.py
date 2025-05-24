@@ -2,11 +2,79 @@ import numpy as np
 import pandas as pd
 import os
 from logger_config import setup_logger
+from sklearn.ensemble import IsolationForest
+from sklearn.svm import OneClassSVM
+from sklearn.preprocessing import StandardScaler
+import joblib
+
 
 logger = setup_logger(__name__)
 
+
+from sklearn.ensemble import IsolationForest
+
+def train_model_for_sensor(df: pd.DataFrame, sp_tag: str, pv_tag: str):
+    sp_col = f"SetPoint_{sp_tag}"
+    pv_col = f"Actual_{pv_tag}"
+    err_col = f"Error_{sp_tag}"
+
+    df[err_col] = df[sp_col] - df[pv_col]
+
+    df["Hour"] = df["Timestamp"].dt.hour
+    df["DayOfWeek"] = df["Timestamp"].dt.dayofweek
+    df["IsWeekend"] = df["DayOfWeek"].isin([5, 6]).astype(int)
+
+    feature_cols = [sp_col, pv_col, err_col, "Hour", "DayOfWeek", "IsWeekend"]
+    df_train = df[feature_cols].dropna()
+
+    if df_train.empty:
+        logger.info(f"No training data for sensor {sp_tag}, skipping.")
+        return
+
+    model = IsolationForest(contamination=0.05, random_state=42)
+    model.fit(df_train)
+
+    model_filename = f"{sp_tag}_model.joblib"
+    joblib.dump(model, model_filename)
+    logger.info(f"Model trained and saved for {sp_tag} at {model_filename}")
+
+
+def detect_anomalies_isolation_forest(df: pd.DataFrame, sp_tag: str, pv_tag: str):
+
+    sp_col = f"SetPoint_{sp_tag}"
+    pv_col = f"Actual_{pv_tag}"
+    err_col = f"Error_{sp_tag}"
+    anomaly_col = f"Anomaly_{sp_tag}"
+
+    df[err_col] = df[sp_col] - df[pv_col]
+    df["Hour"] = df["Timestamp"].dt.hour
+    df["DayOfWeek"] = df["Timestamp"].dt.dayofweek
+    df["IsWeekend"] = df["DayOfWeek"].isin([5, 6]).astype(int)
+
+    feature_cols = [sp_col, pv_col, err_col, "Hour", "DayOfWeek", "IsWeekend"]
+    df_predict = df[feature_cols].dropna()
+
+    try:
+        model_path = f"{sp_tag}_model.joblib"
+        model = joblib.load(model_path)
+    except FileNotFoundError:
+        logger.warning(f"Model not found for {sp_tag}, skipping anomaly detection.")
+        df[anomaly_col] = False
+        return df, False
+
+    preds = model.predict(df_predict)
+    anomaly_flags = (preds == -1)
+
+    # Align predictions with original DataFrame
+    df[anomaly_col] = False
+    df.loc[df_predict.index, anomaly_col] = anomaly_flags
+
+    logger.info(f"Anomalies (Isolation Forest) detected for {sp_tag}: {anomaly_flags.sum()} rows")
+    return df, anomaly_flags.any()
+
 ANOMALY_STD_MULTIPLIER = float(os.getenv("ANOMALY_STD_MULTIPLIER", 3))
 
+# Anomaly detection using Z-Score method 
 def detect_anomalies_for_pair(df: pd.DataFrame, sp_tag: str, pv_tag: str) -> pd.DataFrame:
     sp_col = f"SetPoint_{sp_tag}"
     pv_col = f"Actual_{pv_tag}"
@@ -24,6 +92,6 @@ def detect_anomalies_for_pair(df: pd.DataFrame, sp_tag: str, pv_tag: str) -> pd.
     threshold = ANOMALY_STD_MULTIPLIER * std
 
     df[anomaly_col] = np.abs(df[err_col] - mean) > threshold
-    logger.info(f"Anomalies detected for {sp_tag}: {df[anomaly_col].sum()} rows")
+    logger.info(f"Anomalies (Z-Score) detected for {sp_tag}: {df[anomaly_col].sum()} rows")
 
     return df, df[anomaly_col].any()

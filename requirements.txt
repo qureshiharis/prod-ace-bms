@@ -3,6 +3,8 @@ pytz
 avassa-client>=0.6.0  
 streamlit>=1.30      
 altair                
+scikit-learn>=1.0
 streamlit-autorefresh
 streamlit-authenticator 
-Pillow                       
+Pillow           
+joblib>=1.2.0

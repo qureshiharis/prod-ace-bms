@@ -1,5 +1,5 @@
-name: ace-bms-dev
-version: "1.1"
+name: ace-bms-hist
+version: "2.4"
 services:
   - name: ace-bms
     mode: replicated
@@ -13,12 +13,13 @@ services:
         container-log-size: 100 MB
         container-log-archive: false
         shutdown-timeout: 10s
-        image: YOUR IMAGE URL
+        image: index.docker.io/topnot/prod-ace-bms:v4.7
         env:
-          TOPICS_TO_CONSUME: anomalies-heating, anomalies-ventilation
+          TOPICS_TO_CONSUME: 1473-heating-99, 1473-ventilation-00
           SECRET_ID: ${SYS_APPROLE_SECRET_ID}
-          ROLE_ID: YOUR ROLE ID 
-          DATA_POINTS_SAVED: "10"
+          ROLE_ID: dbb4ec8a-bc2a-41a2-b13a-922da199c044
+          OUTDOOR_TEMP_TAG: 1473_04_AS01_VS01_GT300_PV
+          DATA_POINTS_SAVED: "30"
           API_CA_CERT: ${SYS_API_CA_CERT}
           ANOMALY_STD_MULTIPLIER: "3"
         approle: ace-anomaly-approle
