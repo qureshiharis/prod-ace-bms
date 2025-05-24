@@ -1,24 +1,28 @@
-name: ace-bms-hist
-version: "2.4"
+name: ace-smart-bms
+version: "1.0"
 services:
-  - name: ace-bms
+  - name: ace-smart-bms
     mode: replicated
     replicas: 1
     placement:
-      match-host-labels: function = ventilation
+      match-host-labels: function = bms
     share-pid-namespace: false
     containers:
-      - name: ace-bms-container
+      - name: ace-smart-bms-container
         mounts: []
         container-log-size: 100 MB
         container-log-archive: false
         shutdown-timeout: 10s
-        image: index.docker.io/topnot/prod-ace-bms:v4.7
+        image: index.docker.io/topnot/prod-ace-bms:v5.1
         env:
-          TOPICS_TO_CONSUME: 1473-heating-99, 1473-ventilation-00
+          TOPICS_TO_CONSUME: 1473-district-heating-01, 1473-district-heating-02,
+            1473-ventilation-lb-01, 1473-ventilation-lb-02,
+            1473-ventilation-lb-03, 1473-ventilation-lb-04
           SECRET_ID: ${SYS_APPROLE_SECRET_ID}
           ROLE_ID: dbb4ec8a-bc2a-41a2-b13a-922da199c044
           OUTDOOR_TEMP_TAG: 1473_04_AS01_VS01_GT300_PV
+          ISF_RANDOM_STATE: "42"
+          ISF_CONTAMINATION: "0.05"
           DATA_POINTS_SAVED: "30"
           API_CA_CERT: ${SYS_API_CA_CERT}
           ANOMALY_STD_MULTIPLIER: "3"
