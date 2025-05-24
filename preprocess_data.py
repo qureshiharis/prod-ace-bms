@@ -64,7 +64,7 @@ def try_merge_and_detect(df_sp, df_pv, tag_name, mode, topic_name=None, outdoor_
         
     else:
         logger.info(f"Real time mode, using data to predict")
-        df_anomaly, has_anomaly = detect_anomalies_isolation_forest(df.copy(), f"{tag_name}_CSP", f"{tag_name}_PV")
+        df_anomaly, has_anomaly = detect_anomalies_isolation_forest(df.copy(), f"{tag_name}_CSP", f"{tag_name}_PV", topic_name)
         logger.info(f"Anomaly detection completed for tag: {tag_name}")
         latest_row = df_anomaly[df_anomaly["Timestamp"] == df_anomaly["Timestamp"].max()]
         logger.info(f"Detection done for pair: {tag_name}, anomalies: {has_anomaly}")

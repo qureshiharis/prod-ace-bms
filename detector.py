@@ -46,7 +46,7 @@ def train_model_for_sensor(df: pd.DataFrame, sp_tag: str, pv_tag: str, topic_nam
     logger.info(f"Model trained and saved for {sp_tag} at {model_filename}")
 
 
-def detect_anomalies_isolation_forest(df: pd.DataFrame, sp_tag: str, pv_tag: str):
+def detect_anomalies_isolation_forest(df: pd.DataFrame, sp_tag: str, pv_tag: str, topic_name: str):
 
     sp_col = f"SetPoint_{sp_tag}"
     pv_col = f"Actual_{pv_tag}"
@@ -59,6 +59,8 @@ def detect_anomalies_isolation_forest(df: pd.DataFrame, sp_tag: str, pv_tag: str
     df["IsWeekend"] = df["DayOfWeek"].isin([5, 6]).astype(int)
 
     feature_cols = [sp_col, pv_col, err_col, "Hour", "DayOfWeek", "IsWeekend"]
+    if topic_name and "heating" in topic_name.lower() and "Outdoor_Temperature" in df.columns:
+        feature_cols.append("Outdoor_Temperature")
     df_predict = df[feature_cols].dropna()
 
     try:
