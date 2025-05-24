@@ -60,7 +60,7 @@ def try_merge_and_detect(df_sp, df_pv, tag_name, mode, topic_name=None, outdoor_
     if mode == "historical":
         # Handling of Outside temperature value when topic is heating
         logger.info(f"Historical mode, using data to train model")
-        train_model_for_sensor(df.copy(), f"{tag_name}_CSP", f"{tag_name}_PV")       
+        train_model_for_sensor(df.copy(), f"{tag_name}_CSP", f"{tag_name}_PV", topic_name)       
         
     else:
         logger.info(f"Real time mode, using data to predict")

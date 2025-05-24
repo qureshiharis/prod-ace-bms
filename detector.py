@@ -13,7 +13,7 @@ logger = setup_logger(__name__)
 
 from sklearn.ensemble import IsolationForest
 
-def train_model_for_sensor(df: pd.DataFrame, sp_tag: str, pv_tag: str):
+def train_model_for_sensor(df: pd.DataFrame, sp_tag: str, pv_tag: str, topic_name: str):
     sp_col = f"SetPoint_{sp_tag}"
     pv_col = f"Actual_{pv_tag}"
     err_col = f"Error_{sp_tag}"
@@ -25,6 +25,9 @@ def train_model_for_sensor(df: pd.DataFrame, sp_tag: str, pv_tag: str):
     df["IsWeekend"] = df["DayOfWeek"].isin([5, 6]).astype(int)
 
     feature_cols = [sp_col, pv_col, err_col, "Hour", "DayOfWeek", "IsWeekend"]
+    # Add Outdoor_Temperature only for heating topics and if present in columns
+    if topic_name and "heating" in topic_name.lower() and "Outdoor_Temperature" in df.columns:
+        feature_cols.append("Outdoor_Temperature")
     df_train = df[feature_cols].dropna()
 
     if df_train.empty:
