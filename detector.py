@@ -13,6 +13,10 @@ logger = setup_logger(__name__)
 
 from sklearn.ensemble import IsolationForest
 
+ANOMALY_STD_MULTIPLIER = float(os.getenv("ANOMALY_STD_MULTIPLIER", 3))
+ISF_CONTAMINATION = float(os.getenv("ISF_CONTAMINATION", 0.05))
+ISF_RANDOM_STATE = int(os.getenv("ISF_RANDOM_STATE", 42))
+
 def train_model_for_sensor(df: pd.DataFrame, sp_tag: str, pv_tag: str, topic_name: str):
     sp_col = f"SetPoint_{sp_tag}"
     pv_col = f"Actual_{pv_tag}"
@@ -34,7 +38,7 @@ def train_model_for_sensor(df: pd.DataFrame, sp_tag: str, pv_tag: str, topic_nam
         logger.info(f"No training data for sensor {sp_tag}, skipping.")
         return
 
-    model = IsolationForest(contamination=0.05, random_state=42)
+    model = IsolationForest(contamination=ISF_CONTAMINATION, random_state=ISF_RANDOM_STATE)
     model.fit(df_train)
 
     model_filename = f"{sp_tag}_model.joblib"
@@ -74,8 +78,6 @@ def detect_anomalies_isolation_forest(df: pd.DataFrame, sp_tag: str, pv_tag: str
 
     logger.info(f"Anomalies (Isolation Forest) detected for {sp_tag}: {anomaly_flags.sum()} rows")
     return df, anomaly_flags.any()
-
-ANOMALY_STD_MULTIPLIER = float(os.getenv("ANOMALY_STD_MULTIPLIER", 3))
 
 # Anomaly detection using Z-Score method 
 def detect_anomalies_for_pair(df: pd.DataFrame, sp_tag: str, pv_tag: str) -> pd.DataFrame:
